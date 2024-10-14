@@ -436,3 +436,12 @@ class AddPublicKeyRequest(BaseModel):
     invoice_key: str
     public_key: str  # Hexadecimal string of the public key
     signed_message: str  # Hexadecimal string of the signature
+
+class WalletPubKey(BaseModel):
+    id: str
+    wallet_id: str
+    pubkey: str
+
+    @classmethod
+    def from_row(cls, row: Row):
+        return cls(**dict(row))
