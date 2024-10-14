@@ -515,26 +515,40 @@ async def create_wallet(
     user_id: str,
     wallet_name: Optional[str] = None,
     conn: Optional[Connection] = None,
+    public_key: Optional[str] = None,
 ) -> Wallet:
     wallet_id = uuid4().hex
     now = int(time())
-    await (conn or db).execute(
-        f"""
-        INSERT INTO wallets (id, name, "user", adminkey, inkey, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, {db.timestamp_placeholder}, {db.timestamp_placeholder})
-        """,
-        (
-            wallet_id,
-            wallet_name or settings.lnbits_default_wallet_name,
-            user_id,
-            uuid4().hex,
-            uuid4().hex,
-            now,
-            now,
-        ),
-    )
+    
+    async with (conn or db).acquire() as connection:
+        async with connection.transaction():
+            await connection.execute(
+                f"""
+                INSERT INTO wallets (id, name, "user", adminkey, inkey, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, {db.timestamp_placeholder}, {db.timestamp_placeholder})
+                """,
+                (
+                    wallet_id,
+                    wallet_name or settings.lnbits_default_wallet_name,
+                    user_id,
+                    uuid4().hex,
+                    uuid4().hex,
+                    now,
+                    now,
+                ),
+            )
+
+            if public_key:
+                await connection.execute(
+                    """
+                    INSERT INTO wallets_pubkeys (wallet, pubkey)
+                    VALUES (?, ?)
+                    """,
+                    (wallet_id, public_key),
+                )
 
     new_wallet = await get_wallet(wallet_id=wallet_id, conn=conn)
+    
     assert new_wallet, "Newly created wallet couldn't be retrieved"
 
     return new_wallet

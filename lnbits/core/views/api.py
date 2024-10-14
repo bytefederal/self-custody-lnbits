@@ -67,7 +67,7 @@ async def api_create_account(data: CreateWallet) -> Wallet:
             status_code=HTTPStatus.FORBIDDEN,
             detail="Account creation is disabled.",
         )
-    account = await create_user_account(wallet_name=data.name)
+    account = await create_user_account(wallet_name=data.name, public_key=data.public_key)
     return account.wallets[0]
 
 

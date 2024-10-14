@@ -823,6 +823,7 @@ async def create_user_account(
     password: Optional[str] = None,
     wallet_name: Optional[str] = None,
     user_config: Optional[UserConfig] = None,
+    public_key: Optional[str] = None,
 ) -> User:
     if not settings.new_accounts_allowed:
         raise ValueError("Account creation is disabled.")
@@ -842,7 +843,7 @@ async def create_user_account(
     password = pwd_context.hash(password) if password else None
 
     account = await create_account(user_id, username, email, password, user_config)
-    wallet = await create_wallet(user_id=account.id, wallet_name=wallet_name)
+    wallet = await create_wallet(user_id=account.id, wallet_name=wallet_name, public_key=public_key)
     account.wallets = [wallet]
 
     for ext_id in settings.lnbits_user_default_extensions:
