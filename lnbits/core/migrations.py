@@ -548,3 +548,18 @@ async def m021_add_success_failed_to_apipayments(db):
     )
     # TODO: drop column in next release
     # await db.execute("ALTER TABLE apipayments DROP COLUMN pending")
+
+async def m022_create_wallets_pubkeys_table(db):
+    """
+    Create wallets_pubkeys table to link wallet IDs with public keys.
+    """
+    await db.execute(
+        f"""
+        CREATE TABLE IF NOT EXISTS wallets_pubkeys (
+            id TEXT PRIMARY KEY,
+            wallet_id TEXT NOT NULL REFERENCES wallets(id),
+            pubkey TEXT NOT NULL,
+            UNIQUE(wallet_id, pubkey)
+        );
+        """
+    )
