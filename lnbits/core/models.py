@@ -403,6 +403,7 @@ class CreateLnurlAuth(BaseModel):
 
 class CreateWallet(BaseModel):
     name: Optional[str] = None
+    public_key: Optional[str] = None  # Hexadecimal string of the public key
 
 
 class CreateWebPushSubscription(BaseModel):
@@ -429,3 +430,9 @@ class BalanceDelta(BaseModel):
 class SimpleStatus(BaseModel):
     success: bool
     message: str
+
+class AddPublicKeyRequest(BaseModel):
+    user_key: str
+    invoice_key: str
+    public_key: str  # Hexadecimal string of the public key
+    signed_message: str  # Hexadecimal string of the signature
