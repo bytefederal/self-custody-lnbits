@@ -554,13 +554,19 @@ async def m022_create_wallets_pubkeys_table(db):
     Create wallets_pubkeys table to link wallet IDs with public keys.
     These are run from helpers.py
     """
-    await db.execute(
-        f"""
-        CREATE TABLE IF NOT EXISTS wallets_pubkeys (
-            id TEXT PRIMARY KEY,
-            wallet_id TEXT NOT NULL REFERENCES wallets(id),
-            pubkey TEXT NOT NULL,
-            UNIQUE(wallet_id, pubkey)
-        );
-        """
-    )
+    try:
+        logger.info("Starting migration m022_create_wallets_pubkeys_table")
+        await db.execute(
+            """
+            CREATE TABLE IF NOT EXISTS wallets_pubkeys (
+                id TEXT PRIMARY KEY,
+                wallet_id TEXT NOT NULL REFERENCES wallets(id),
+                pubkey TEXT NOT NULL,
+                UNIQUE(wallet_id, pubkey)
+            );
+            """
+        )
+        logger.info("Finished migration m022_create_wallets_pubkeys_table")
+    except Exception as e:
+        logger.error(f"Migration m022 failed: {e}")
+        raise
