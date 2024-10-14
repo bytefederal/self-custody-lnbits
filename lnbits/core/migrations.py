@@ -552,6 +552,7 @@ async def m021_add_success_failed_to_apipayments(db):
 async def m022_create_wallets_pubkeys_table(db):
     """
     Create wallets_pubkeys table to link wallet IDs with public keys.
+    These are run from helpers.py
     """
     await db.execute(
         f"""
