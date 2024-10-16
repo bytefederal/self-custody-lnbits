@@ -32,6 +32,28 @@ class InstalledExtensionMiddleware:
         top_path, *rest = (p for p in full_path.split("/") if p)
         headers = scope.get("headers", [])
 
+        # Signature verification for lndhub extension
+        if top_path == "lndhub":
+            request = Request(scope, receive)
+            wallet_id = request.headers.get('X-BF-Wallet-Id')
+            public_key = request.headers.get('X-BF-Public-Key')
+            signature = request.headers.get('X-BF-Signature')
+
+            if not all([wallet_id, public_key, signature]):
+                response = self._response_by_accepted_type(
+                    scope, headers, "Missing required headers", HTTPStatus.UNAUTHORIZED
+                )
+                await response(scope, receive, send)
+                return
+
+            is_valid = await verify_wallet_pubkey(wallet_id, public_key, signature)
+            if not is_valid:
+                response = self._response_by_accepted_type(
+                    scope, headers, "Invalid signature", HTTPStatus.UNAUTHORIZED
+                )
+                await response(scope, receive, send)
+                return
+
         # block path for all users if the extension is disabled
         if top_path in settings.lnbits_deactivated_extensions:
             response = self._response_by_accepted_type(

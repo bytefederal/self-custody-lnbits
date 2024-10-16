@@ -58,6 +58,7 @@ from ..services import (
     fee_reserve_total,
     pay_invoice,
     update_pending_payments,
+    verify_wallet_pubkey
 )
 from ..tasks import api_invoice_listeners
 
@@ -238,7 +239,7 @@ async def api_payments_create(
             )
         # Check if public key exists in the database
         verified_pubkey = await verify_wallet_pubkey(wallet.wallet.id, invoice_data.public_key, invoice_data.signature)
-
+        
         if not verified_pubkey:
             raise HTTPException(
                 status_code=HTTPStatus.BAD_REQUEST,

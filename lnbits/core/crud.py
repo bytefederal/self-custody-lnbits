@@ -204,13 +204,14 @@ async def get_wallet_pubkeys(wallet_id: str, conn: Optional[Connection] = None) 
 
 # wallet_id:invoice_key:admin_key:<our own static key>
 async def get_message_to_verify_from_wallet(wallet_id: str, conn: Optional[Connection] = None) -> str:
-    rows = await (conn or db).fetchall(
+    row = await (conn or db).fetchone(
         """
-        SELECT wallet_id, invoice_key, admin_key FROM wallets WHERE id = ?
+        SELECT inkey, adminkey FROM wallets WHERE id = ?
         """,
         (wallet_id,),
     )
-    return f"{rows[0][0]}:{rows[0][1]}:{rows[0][2]}:{settings.LNBITS_PUBKEYS_CHECK_SIGNATURE_KEY}"
+    return f"{wallet_id}:{row[0]}:{row[1]}:{settings.LNBITS_PUBKEYS_CHECK_SIGNATURE_KEY}"
+
 
 
 
