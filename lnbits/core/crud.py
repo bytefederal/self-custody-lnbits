@@ -576,7 +576,7 @@ async def add_wallet_pubkey(wallet_id: str, public_key: str) -> None:
     """
     await db.execute(
         """
-        INSERT INTO wallets_pubkeys (wallet_id, public_key)
+        INSERT INTO wallets_pubkeys (wallet_id, pubkey)
         VALUES (?, ?)
         """,
         (wallet_id, public_key),
