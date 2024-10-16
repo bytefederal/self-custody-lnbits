@@ -38,6 +38,9 @@ from .models import (
     WebPushSubscription,
 )
 
+from contextlib import contextmanager
+from loguru import logger
+
 # accounts
 # --------
 
@@ -510,6 +513,15 @@ async def update_user_extension_extra(
 # -------
 
 
+@contextmanager
+def safe_transaction(database):
+    try:
+        yield
+    except Exception:
+        if hasattr(database, 'rollback'):
+            database.rollback()
+        raise
+
 async def create_wallet(
     *,
     user_id: str,
@@ -520,9 +532,11 @@ async def create_wallet(
     wallet_id = uuid4().hex
     now = int(time())
     
-    async with (conn or db).acquire() as connection:
-        async with connection.transaction():
-            await connection.execute(
+    database = conn or db
+    
+    try:
+        with safe_transaction(database):
+            await database.execute(
                 f"""
                 INSERT INTO wallets (id, name, "user", adminkey, inkey, created_at, updated_at)
                 VALUES (?, ?, ?, ?, ?, {db.timestamp_placeholder}, {db.timestamp_placeholder})
@@ -537,20 +551,23 @@ async def create_wallet(
                     now,
                 ),
             )
-
+            
             if public_key:
-                await connection.execute(
+                await database.execute(
                     """
-                    INSERT INTO wallets_pubkeys (wallet, pubkey)
-                    VALUES (?, ?)
+                    INSERT INTO wallets_pubkeys (id, wallet_id, pubkey)
+                    VALUES (?, ?, ?)
                     """,
-                    (wallet_id, public_key),
+                    (uuid4().hex, wallet_id, public_key),
                 )
+                logger.info(f"Added public key {public_key} to wallet {wallet_id}")
+
+    except Exception as e:
+        logger.error(f"Error creating wallet: {str(e)}")
+        raise
 
     new_wallet = await get_wallet(wallet_id=wallet_id, conn=conn)
-    
     assert new_wallet, "Newly created wallet couldn't be retrieved"
-
     return new_wallet
 
 async def add_wallet_pubkey(wallet_id: str, public_key: str) -> None:
