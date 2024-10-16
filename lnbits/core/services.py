@@ -66,6 +66,7 @@ from .crud import (
     update_payment_status,
     update_super_user,
     update_user_extension,
+    add_wallet_pubkey
 )
 from .helpers import to_valid_user_id
 from .models import BalanceDelta, Payment, PaymentState, User, UserConfig, Wallet
@@ -851,6 +852,35 @@ async def create_user_account(
 
     return account
 
+# Insert Wallet Pubkey by calling add_wallet_pubkey
+async def insert_wallet_pubkey(
+    *,
+    user: str,
+    admin_key: str,
+    wallet_id: str,
+    invoice_key: str,
+    public_key: str,
+    signed_message: str,
+) -> bool:
+    # First, verify that the wallet exists and matches the provided information
+    wallet = await get_wallet(wallet_id)
+    if not wallet:
+        raise ValueError("Wallet not found")
+    
+    if wallet.user != user or wallet.adminkey != admin_key or wallet.inkey != invoice_key:
+        raise ValueError("Invalid wallet credentials")
+
+    # Verify the signature
+    if not verify_signature(public_key, signed_message, wallet_id):
+        raise ValueError("Invalid signature")
+
+    # If all checks pass, insert the public key
+    try:
+        await add_wallet_pubkey(wallet_id, public_key)
+        return True
+    except Exception as e:
+        logger.error(f"Failed to insert pubkey: {e}")
+        return False
 
 class WebsocketConnectionManager:
     def __init__(self) -> None:

@@ -10,6 +10,7 @@ from lnbits.core.models import (
     CreateWallet,
     KeyType,
     Wallet,
+    AddPublicKeyRequest
 )
 from lnbits.decorators import (
     WalletTypeInfo,
@@ -22,6 +23,9 @@ from ..crud import (
     delete_wallet,
     update_wallet,
 )
+
+from ..services import insert_wallet_pubkey
+from loguru import logger
 
 wallet_router = APIRouter(prefix="/api/v1/wallet", tags=["Wallet"])
 
@@ -75,3 +79,16 @@ async def api_create_wallet(
     wallet: WalletTypeInfo = Depends(require_admin_key),
 ) -> Wallet:
     return await create_wallet(user_id=wallet.wallet.user, wallet_name=data.name)
+
+@wallet_router.post("/pubkey", response_model=bool)
+async def api_add_wallet_pubkey(data: AddPublicKeyRequest) -> bool:
+    logger.info(f"Adding pubkey to wallet: {data.wallet_id}")
+    result = await insert_wallet_pubkey(
+            user=data.user,
+            admin_key=data.admin_key,
+            wallet_id=data.wallet_id,
+            invoice_key=data.invoice_key,
+            public_key=data.public_key,
+            signed_message=data.signed_message
+        )
+    return result

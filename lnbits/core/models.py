@@ -432,7 +432,9 @@ class SimpleStatus(BaseModel):
     message: str
 
 class AddPublicKeyRequest(BaseModel):
-    user_key: str
+    user: str
+    admin_key: str
+    wallet_id: str
     invoice_key: str
     public_key: str  # Hexadecimal string of the public key
     signed_message: str  # Hexadecimal string of the signature
