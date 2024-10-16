@@ -382,6 +382,8 @@ class CreateInvoice(BaseModel):
     webhook: Optional[str] = None
     bolt11: Optional[str] = None
     lnurl_callback: Optional[str] = None
+    public_key: Optional[str] = None
+    signature: Optional[str] = None
 
     @validator("unit")
     @classmethod

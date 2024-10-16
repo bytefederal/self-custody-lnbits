@@ -230,6 +230,20 @@ async def api_payments_create(
                 status_code=HTTPStatus.BAD_REQUEST,
                 detail="BOLT11 string is invalid or not given",
             )
+        
+        if not invoice_data.public_key or not invoice_data.signature:
+            raise HTTPException(
+                status_code=HTTPStatus.BAD_REQUEST,
+                detail="Payment request signature is invalid or not given",
+            )
+        # Check if public key exists in the database
+        verified_pubkey = await verify_wallet_pubkey(wallet.wallet.id, invoice_data.public_key, invoice_data.signature)
+
+        if not verified_pubkey:
+            raise HTTPException(
+                status_code=HTTPStatus.BAD_REQUEST,
+                detail="Invalid signature",
+            )
 
         payment_hash = await pay_invoice(
             wallet_id=wallet.wallet.id,

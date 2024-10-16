@@ -66,7 +66,9 @@ from .crud import (
     update_payment_status,
     update_super_user,
     update_user_extension,
-    add_wallet_pubkey
+    add_wallet_pubkey,
+    get_wallet_pubkeys,
+    get_message_to_verify_from_wallet
 )
 from .helpers import to_valid_user_id
 from .models import BalanceDelta, Payment, PaymentState, User, UserConfig, Wallet
@@ -897,28 +899,58 @@ async def insert_wallet_pubkey(
         return False
 
 
-# def verify_signature(public_key: str, signed_message: str, message: str) -> bool:
-#     try:
-#         message = "https://wallet.bytefederal.com/web/api/fastbyte?sid=wn3ohag3j6af0suicucygco2qm7x04pm_1729089265&c=eidhht7j7lbnsyslxpkuzili0ec9kdwv_1729089265&t=670fcef1"
-#         # Decode the public key from hex
-#         vk = VerifyingKey.from_string(bytes.fromhex(public_key), curve=SECP256k1)
-        
-#         # Prepare the message (Bitcoin signed message format)
-#         message_magic = b"\x18Bitcoin Signed Message:\n"
-#         message_bytes = message.encode('utf-8')
-#         message_to_sign = message_magic + len(message_bytes).to_bytes(1, 'big') + message_bytes
-        
-#         # Double SHA256 the message
-#         message_hash = hashlib.sha256(hashlib.sha256(message_to_sign).digest()).digest()
-        
-#         # Decode the signature from base64
-#         signature = base64.b64decode(signed_message)
-        
-#         # Verify the signature
-#         return vk.verify(signature[1:], message_hash, sigdecode=sigdecode_der)
-#     except Exception as e:
-#         print(f"Signature verification error: {str(e)}")
-#         return False
+async def verify_wallet_pubkey(
+    wallet_id: str,
+    public_key: str,
+    signature: str,
+) -> bool:
+    """
+    Verifies that the public key is valid for the wallet by:
+    - Checking if the public key exists in the wallet's public keys in the database.
+    - Verifying the signature of the message using the public key.
+
+    Args:
+        wallet_id (str): The ID of the wallet.
+        public_key (str): The public key to verify.
+        signature (str): The signature of the message (base64-encoded).
+
+    Returns:
+        bool: True if both checks pass, False otherwise.
+    """
+    try:
+        logger.info(f"Verifying public key for wallet: {wallet_id}")
+
+        # Step 1: Check if the public key exists in the database for the wallet
+        wallet_pubkeys = await get_wallet_pubkeys(wallet_id)
+        if not wallet_pubkeys:
+            logger.error(f"No public keys found for wallet: {wallet_id}")
+            return False
+
+        if public_key not in wallet_pubkeys:
+            logger.error("Public key does not exist for the wallet.")
+            return False
+        else:
+            logger.info("Public key exists in the wallet's public keys.")
+
+        # Step 2: Verify the signature
+        address = pubkey_to_address(public_key)
+        logger.info(f"Derived address from public key: {address}")
+
+        # Step 2.5: Grab the message to verify
+        message_to_verify = get_message_to_verify_from_wallet(wallet_id)
+
+        verification_result = verify_bitcoin_message(address, signature, message_to_verify, public_key)
+        if verification_result:
+            logger.info("Signature verification passed.")
+            return True
+        else:
+            logger.error("Signature verification failed.")
+            return False
+
+    except Exception as e:
+        logger.error(f"Error in verify_wallet_pubkey: {str(e)}")
+        return False
+
 
 class WebsocketConnectionManager:
     def __init__(self) -> None:

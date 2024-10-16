@@ -192,6 +192,27 @@ async def delete_accounts_no_wallets(
         ),
     )
 
+# Get all pubkeys in wallet_pubkeys table from a wallet id
+async def get_wallet_pubkeys(wallet_id: str, conn: Optional[Connection] = None) -> List[str]:
+    rows = await (conn or db).fetchall(
+        """
+        SELECT pubkey FROM wallets_pubkeys WHERE wallet_id = ?
+        """,
+        (wallet_id,),
+    )
+    return [row[0] for row in rows]
+
+# wallet_id:invoice_key:admin_key:<our own static key>
+async def get_message_to_verify_from_wallet(wallet_id: str, conn: Optional[Connection] = None) -> str:
+    rows = await (conn or db).fetchall(
+        """
+        SELECT wallet_id, invoice_key, admin_key FROM wallets WHERE id = ?
+        """,
+        (wallet_id,),
+    )
+    return f"{rows[0][0]}:{rows[0][1]}:{rows[0][2]}:{settings.admin_key}"
+    
+
 
 async def get_user_password(user_id: str) -> Optional[str]:
     row = await db.fetchone(
