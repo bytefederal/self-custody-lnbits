@@ -210,8 +210,8 @@ async def get_message_to_verify_from_wallet(wallet_id: str, conn: Optional[Conne
         """,
         (wallet_id,),
     )
-    return f"{rows[0][0]}:{rows[0][1]}:{rows[0][2]}:{settings.admin_key}"
-    
+    return f"{rows[0][0]}:{rows[0][1]}:{rows[0][2]}:{settings.LNBITS_PUBKEYS_CHECK_SIGNATURE_KEY}"
+
 
 
 async def get_user_password(user_id: str) -> Optional[str]:

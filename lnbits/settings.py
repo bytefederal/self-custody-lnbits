@@ -423,6 +423,7 @@ class EnvSettings(LNbitsSettings):
     server_startup_time: int = Field(default=time())
     cleanup_wallets_days: int = Field(default=90)
     funding_source_max_retries: int = Field(default=4)
+    LNBITS_PUBKEYS_CHECK_SIGNATURE_KEY: str = Field(default="")
 
     @property
     def has_default_extension_path(self) -> bool:
