@@ -59,7 +59,6 @@ from .middleware import (
     add_first_install_middleware,
     add_ip_block_middleware,
     add_ratelimit_middleware,
-    LndHubSignatureVerificationMiddleware,
 )
 from .requestvars import g
 from .tasks import (
