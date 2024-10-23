@@ -881,7 +881,7 @@ async def insert_wallet_pubkey(
     logger.info(f"Derived address from public key: {address}")
 
     # THE STATIC KEY IS A PLACEHOLDER FOR NOW THAT SHOULD BE IN THE .ENV FILE
-    message_to_verify = wallet_id + ":" + invoice_key + ":" + "somestatickeywechoose"
+    message_to_verify = await get_message_to_verify_from_wallet(wallet_id)
     logger.info(f"Message to verify: {message_to_verify}")
     
     # Verify the signature
@@ -937,6 +937,7 @@ async def verify_wallet_pubkey(
         logger.info(f"Derived address from public key: {address}")
 
         # Step 2.5: Grab the message to verify
+        
         message_to_verify = await get_message_to_verify_from_wallet(wallet_id)
         logger.info(f"Message to verify: {message_to_verify}")
         verification_result = verify_bitcoin_message(address, signature, message_to_verify, public_key)

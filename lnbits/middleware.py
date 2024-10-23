@@ -13,7 +13,7 @@ from lnbits.core.db import core_app_extra
 from lnbits.helpers import template_renderer
 from lnbits.settings import settings
 
-
+from loguru import logger
 from lnbits.core.services import verify_wallet_pubkey
 
 class InstalledExtensionMiddleware:
@@ -46,6 +46,7 @@ class InstalledExtensionMiddleware:
                     response = self._response_by_accepted_type(
                         scope, headers, "Missing required headers", HTTPStatus.UNAUTHORIZED
                     )
+                    logger.error("Missing required headers for lndhub" )
                     await response(scope, receive, send)
                     return
 
@@ -54,6 +55,7 @@ class InstalledExtensionMiddleware:
                     response = self._response_by_accepted_type(
                         scope, headers, "Invalid signature", HTTPStatus.UNAUTHORIZED
                     )
+                    logger.error("Invalid signature for lndhub" )
                     await response(scope, receive, send)
                     return
 

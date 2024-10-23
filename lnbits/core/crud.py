@@ -210,7 +210,9 @@ async def get_message_to_verify_from_wallet(wallet_id: str, conn: Optional[Conne
         """,
         (wallet_id,),
     )
-    return f"{wallet_id}:{row[0]}:{row[1]}:{settings.LNBITS_PUBKEYS_CHECK_SIGNATURE_KEY}"
+    expected_message = f"{wallet_id}:{row[0]}:{row[1]}:{settings.LNBITS_PUBKEYS_CHECK_SIGNATURE_KEY}"
+    logger.info(f"get_message_to_verify_from_wallet: {expected_message}")
+    return expected_message
 
 
 
